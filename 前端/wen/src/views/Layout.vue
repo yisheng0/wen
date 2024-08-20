@@ -8,7 +8,9 @@ import {
   SwitchButton,
   User,
   UserFilled,
-  MagicStick
+  MagicStick,
+  DArrowLeft,
+  DArrowRight
 } from '@element-plus/icons-vue'
 import avatar from '@/assets/default.png'
 import { userInfoService } from "@/api/user";
@@ -20,6 +22,9 @@ import { useTabsStore } from '@/stores/tabs'
 import { watch, ref } from 'vue';
 
 const userInfoStore = useUserInfoStore();
+const isCollapse = ref(true)
+let src = isCollapse ? '@/assets/logoone.png' : '@/assets/logosmall.png'
+
 const getUserInfo = async () => {
   const result = await userInfoService();
   userInfoStore.setUserInfo(result.data)
@@ -68,26 +73,26 @@ const handleCommand = (command) => {
 <template>
   <el-container class="layout-container">
     <!-- 左侧菜单 -->
-    <el-aside width="200px">
-      <div class="el-aside__logo"></div>
-      <el-menu active-text-color="#ffd04b" background-color="#232323" text-color="#fff" router>
+    <el-aside>
+      <div class="el-aside__logo" v-if="!isCollapse"></div>
+      <div v-else class="el-aside__logo1"></div>
+      <el-menu :collapse="isCollapse" active-text-color="#ffd04b" background-color="rgb(0, 21, 41)" text-color="#fff" router>
         <el-menu-item index="/article/category" @click="TabsStore.addTab('文章分类')">
           <el-icon>
             <Management />
-          </el-icon>
-          <span>文章分类</span>
+          </el-icon> <template #title>文章分类</template>
         </el-menu-item>
         <el-menu-item index="/article/manage" @click="TabsStore.addTab('文章管理')">
           <el-icon>
             <Promotion />
           </el-icon>
-          <span>文章管理</span>
+          <template #title>文章管理</template>
         </el-menu-item>
         <el-menu-item index="/ai/gemini" @click="TabsStore.addTab('灵感创作')">
           <el-icon>
             <MagicStick />
           </el-icon>
-          <span>灵感创作</span>
+          <template #title>灵感创作</template>
         </el-menu-item>
         <el-sub-menu>
           <template #title>
@@ -100,19 +105,19 @@ const handleCommand = (command) => {
             <el-icon>
               <User />
             </el-icon>
-            <span>基本资料</span>
+            <template #title>基本资料</template>
           </el-menu-item>
           <el-menu-item index="/user/avatar">
             <el-icon>
               <Crop />
             </el-icon>
-            <span>更换头像</span>
+            <template #title>更换头像</template>
           </el-menu-item>
           <el-menu-item index="/user/resetPassword">
             <el-icon>
               <EditPen />
             </el-icon>
-            <span>重置密码</span>
+            <template #title>修改密码</template>
           </el-menu-item>
         </el-sub-menu>
       </el-menu>
@@ -121,7 +126,19 @@ const handleCommand = (command) => {
     <el-container>
       <!-- 头部区域 -->
       <el-header>
-        <div>捉刀客：<strong>{{ userInfoStore.userInfo.nickname }}</strong></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; user-select: none;">
+          <div style="border: 4px solid #ccc; margin-right: 10px; padding: 2px; background-color: #fff; border-radius: 50%; cursor: pointer;">
+            <el-icon @click="isCollapse = !isCollapse" v-show="isCollapse">
+              <DArrowRight />
+            </el-icon>
+            <el-icon @click="isCollapse = !isCollapse" v-show="!isCollapse">
+              <DArrowLeft />
+            </el-icon>
+          </div>
+
+          <div>捉刀客：<strong>{{ userInfoStore.userInfo.nickname }}</strong></div>
+        </div>
+
         <el-dropdown placement="bottom-end" @command="handleCommand">
           <span class="el-dropdown__box">
             <el-avatar :src="userInfoStore.userInfo.userPic ? userInfoStore.userInfo.userPic : avatar" />
@@ -156,13 +173,19 @@ const handleCommand = (command) => {
 <style lang="scss" scoped>
 .layout-container {
   height: 100vh;
+  display: flex;
 
   .el-aside {
+    width: auto;
     background-color: rgb(0, 21, 41);
 
     &__logo {
       height: 120px;
       background: url('@/assets/logoone.png') no-repeat center / 120px auto;
+    }
+    &__logo1 {
+      height: 120px;
+      background: url('@/assets/logosmall.png') no-repeat center / 36px auto;
     }
 
     .el-menu {
@@ -176,34 +199,38 @@ const handleCommand = (command) => {
     }
   }
 
-  .el-header {
-    background-color: rgb(255, 255, 255);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .el-container {
 
-    .el-dropdown__box {
+    .el-header {
+      background-color: rgb(255, 255, 255);
       display: flex;
       align-items: center;
+      justify-content: space-between;
 
-      .el-icon {
-        color: rgb(255, 255, 255);
-        margin-left: 10px;
-      }
+      .el-dropdown__box {
+        display: flex;
+        align-items: center;
 
-      &:active,
-      &:focus {
-        outline: none;
+        .el-icon {
+          color: rgb(255, 255, 255);
+          margin-left: 10px;
+        }
+
+        &:active,
+        &:focus {
+          outline: none;
+        }
       }
+    }
+
+    .el-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #666;
     }
   }
 
-  .el-footer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    color: #666;
-  }
 }
 </style>

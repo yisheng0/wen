@@ -65,7 +65,6 @@ const onCurrentChange = (num) => {
 }
 
 const articleCategoryList = async () => {
-  console.log(1)
   const result = await articleCategoryListService();
   categories.value = result.data
 }
@@ -79,7 +78,6 @@ const articleList = async () => {
     categoryId: categoryId.value ? categoryId.value : null,
     state: state.value ? state.value : null
   }
-  console.log(3)
   const result = await articleListService(params);
   articles.value = result.data.items
   total.value = result.data.total

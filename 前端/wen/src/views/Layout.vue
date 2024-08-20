@@ -1,5 +1,4 @@
 <script setup>
-
 import {
   CaretBottom,
   Crop,
@@ -17,6 +16,8 @@ import { useUserInfoStore } from "@/stores/userInfo";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useTokenStore } from "@/stores/token";
+import { useTabsStore } from '@/stores/tabs'
+import { watch, ref } from 'vue';
 
 const userInfoStore = useUserInfoStore();
 const getUserInfo = async () => {
@@ -25,7 +26,19 @@ const getUserInfo = async () => {
 }
 getUserInfo()
 
+const TabsStore = useTabsStore()
+let hashTabs = {
+  '文章分类': '/article/category',
+  '文章管理': '/article/manage',
+  '灵感创作': '/ai/gemini'
+}
+
 const router = useRouter();
+watch(() => TabsStore.currentTab, (newVal, oldVal) => {
+  if (hashTabs[newVal]) {
+    router.push(hashTabs[newVal])
+  }
+})
 const tokenStore = useTokenStore();
 const handleCommand = (command) => {
   if (command === 'logout') {
@@ -58,19 +71,19 @@ const handleCommand = (command) => {
     <el-aside width="200px">
       <div class="el-aside__logo"></div>
       <el-menu active-text-color="#ffd04b" background-color="#232323" text-color="#fff" router>
-        <el-menu-item index="/article/category">
+        <el-menu-item index="/article/category" @click="TabsStore.addTab('文章分类')">
           <el-icon>
             <Management />
           </el-icon>
           <span>文章分类</span>
         </el-menu-item>
-        <el-menu-item index="/article/manage">
+        <el-menu-item index="/article/manage" @click="TabsStore.addTab('文章管理')">
           <el-icon>
             <Promotion />
           </el-icon>
           <span>文章管理</span>
         </el-menu-item>
-        <el-menu-item index="/ai/gemini">
+        <el-menu-item index="/ai/gemini" @click="TabsStore.addTab('灵感创作')">
           <el-icon>
             <MagicStick />
           </el-icon>
@@ -126,7 +139,11 @@ const handleCommand = (command) => {
           </template>
         </el-dropdown>
       </el-header>
-      <!-- 中间区域 -->
+
+      <!-- Tabs区域 -->
+      <el-tabs v-model="TabsStore.currentTab" type="card" class="demo-tabs" closable @tab-remove="TabsStore.removeTab">
+        <el-tab-pane v-for="item in TabsStore.tabs" :key="item" :label="item" :name="item" />
+      </el-tabs>
       <el-main>
         <router-view />
       </el-main>
@@ -141,7 +158,7 @@ const handleCommand = (command) => {
   height: 100vh;
 
   .el-aside {
-    background-color: rgb(161 161 170);
+    background-color: rgb(0, 21, 41);
 
     &__logo {
       height: 120px;
@@ -150,12 +167,17 @@ const handleCommand = (command) => {
 
     .el-menu {
       border-right: none;
-      background-color: rgb(161 161 170);
+      background-color: rgb(0, 21, 41);
+      color: #000;
+    }
+
+    .el-menu-item:hover {
+      background-color: rgb(36, 73, 255);
     }
   }
 
   .el-header {
-    background-color: #fff;
+    background-color: rgb(255, 255, 255);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -165,7 +187,7 @@ const handleCommand = (command) => {
       align-items: center;
 
       .el-icon {
-        color: #999;
+        color: rgb(255, 255, 255);
         margin-left: 10px;
       }
 

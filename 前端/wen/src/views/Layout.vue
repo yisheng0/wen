@@ -10,20 +10,21 @@ import {
   UserFilled,
   MagicStick,
   DArrowLeft,
-  DArrowRight
+  DArrowRight,
+  DataLine
 } from '@element-plus/icons-vue'
 import avatar from '@/assets/default.png'
 import { userInfoService } from "@/api/user";
 import { useUserInfoStore } from "@/stores/userInfo";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useTokenStore } from "@/stores/token";
 import { useTabsStore } from '@/stores/tabs'
 import { watch, ref } from 'vue';
+import frgema from './darw/frgema.vue';
 
 const userInfoStore = useUserInfoStore();
 const isCollapse = ref(true)
-let src = isCollapse ? '@/assets/logoone.png' : '@/assets/logosmall.png'
 
 const getUserInfo = async () => {
   const result = await userInfoService();
@@ -31,11 +32,13 @@ const getUserInfo = async () => {
 }
 getUserInfo()
 
+// tabs逻辑
 const TabsStore = useTabsStore()
 let hashTabs = {
   '文章分类': '/article/category',
   '文章管理': '/article/manage',
-  '灵感创作': '/ai/gemini'
+  '灵感创作': '/ai/gemini',
+  '画板绘制': '/darw/frgema'
 }
 
 const router = useRouter();
@@ -44,6 +47,8 @@ watch(() => TabsStore.currentTab, (newVal, oldVal) => {
     router.push(hashTabs[newVal])
   }
 })
+
+// 退出登录
 const tokenStore = useTokenStore();
 const handleCommand = (command) => {
   if (command === 'logout') {
@@ -68,6 +73,26 @@ const handleCommand = (command) => {
     router.push('/user/' + command)
   }
 }
+
+// iframe显示逻辑
+const isNowPage = ref(false)
+const isVisited = ref(false)
+const routerPath = useRoute()
+watch(
+  () => routerPath.path,
+  (value) => {
+    if (value === '/darw/frgema') {
+      isVisited.value = true
+      isNowPage.value = true
+    } else {
+      isNowPage.value = false
+    }
+  },
+  {
+    immediate: true
+  }
+)
+
 </script>
 
 <template>
@@ -76,7 +101,8 @@ const handleCommand = (command) => {
     <el-aside>
       <div class="el-aside__logo" v-if="!isCollapse"></div>
       <div v-else class="el-aside__logo1"></div>
-      <el-menu :collapse="isCollapse" active-text-color="#ffd04b" background-color="rgb(0, 21, 41)" text-color="#fff" router>
+      <el-menu :collapse="isCollapse" active-text-color="#ffd04b" background-color="rgb(0, 21, 41)" text-color="#fff"
+        router>
         <el-menu-item index="/article/category" @click="TabsStore.addTab('文章分类')">
           <el-icon>
             <Management />
@@ -94,6 +120,12 @@ const handleCommand = (command) => {
           </el-icon>
           <template #title>灵感创作</template>
         </el-menu-item>
+
+        <el-menu-item index="/darw/frgema" @click="TabsStore.addTab('画板绘制')">
+          <el-icon><DataLine /></el-icon>
+          <template #title>画板绘制</template>
+        </el-menu-item>
+
         <el-sub-menu>
           <template #title>
             <el-icon>
@@ -127,7 +159,8 @@ const handleCommand = (command) => {
       <!-- 头部区域 -->
       <el-header>
         <div style="display: flex; align-items: center; justify-content: space-between; user-select: none;">
-          <div style="border: 4px solid #ccc; margin-right: 10px; padding: 2px; background-color: #fff; border-radius: 50%; cursor: pointer;">
+          <div
+            style="border: 4px solid #ccc; margin-right: 10px; padding: 2px; background-color: #fff; border-radius: 50%; cursor: pointer;">
             <el-icon @click="isCollapse = !isCollapse" v-show="isCollapse">
               <DArrowRight />
             </el-icon>
@@ -162,7 +195,12 @@ const handleCommand = (command) => {
         <el-tab-pane v-for="item in TabsStore.tabs" :key="item" :label="item" :name="item" />
       </el-tabs>
       <el-main>
-        <router-view />
+        <frgema v-if="isVisited" v-show="isNowPage" />
+        <router-view v-slot="{ Component }">
+          <keep-alive :include="['frgema', 'gemini']">
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </el-main>
       <!-- 底部区域 -->
       <el-footer>文思泉涌 © 文官执笔 ，不欺百姓</el-footer>
@@ -183,6 +221,7 @@ const handleCommand = (command) => {
       height: 120px;
       background: url('@/assets/logoone.png') no-repeat center / 120px auto;
     }
+
     &__logo1 {
       height: 120px;
       background: url('@/assets/logosmall.png') no-repeat center / 36px auto;

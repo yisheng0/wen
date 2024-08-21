@@ -7,7 +7,7 @@ import gemini from "@/views/ai/gemini.vue";
 import UserInfo from "@/views/user/UserInfo.vue";
 import UserAvatar from "@/views/user/UserAvatar.vue";
 import UserResetPassword from "@/views/user/UserResetPassword.vue";
-
+import frgema from "../views/darw/frgema.vue";
 
 const routes = [
   {path: '/login', component: Login},
@@ -22,6 +22,7 @@ const routes = [
       {path: '/user/info', component: UserInfo},
       {path: '/user/avatar', component: UserAvatar},
       {path: '/user/resetPassword', component: UserResetPassword},
+      {path: '/darw/frgema', component:{render() {}}},
     ]
   },
 ]

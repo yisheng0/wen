@@ -1,7 +1,7 @@
 <script setup>
-import {Delete, Edit, Plus} from '@element-plus/icons-vue'
-
-import {ref} from 'vue'
+import { Delete, Edit, Plus, Grid, List } from '@element-plus/icons-vue'
+import { Card } from '@/components'
+import { ref } from 'vue'
 import {
   articleAddService,
   articleCategoryListService,
@@ -9,10 +9,10 @@ import {
   articleListService,
   articleUpdateService
 } from "@/api/article";
-import {QuillEditor} from '@vueup/vue-quill'
+import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
-import {useTokenStore} from "@/stores/token";
-import {ElMessage, ElMessageBox} from "element-plus";
+import { useTokenStore } from "@/stores/token";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 //文章分类数据模型
 const categories = ref([
@@ -53,6 +53,9 @@ const pageNum = ref(1)//当前页
 const total = ref(20)//总条数
 const pageSize = ref(3)//每页条数
 
+// grid list切换
+let grid_list = ref(true)
+
 //当每页条数发生了变化，调用此函数
 const onSizeChange = (size) => {
   pageSize.value = size
@@ -80,6 +83,7 @@ const articleList = async () => {
   }
   const result = await articleListService(params);
   articles.value = result.data.items
+  console.log(articles.value)
   total.value = result.data.total
   for (let i = 0; i < articles.value.length; i++) {
     const article = articles.value[i];
@@ -155,20 +159,20 @@ const updateArticle = async (clickState) => {
 
 const deleteArticle = (row) => {
   ElMessageBox.confirm(
-      '你确认要删除该文章信息吗？',
-      '温馨提示',
-      {
-        confirmButtonText: '确认',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+    '你确认要删除该文章信息吗？',
+    '温馨提示',
+    {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
   ).then(
-      async () => {
-        console.log(2)
-        await articleDeleteService(row.id)
-        ElMessage.success("删除成功")
-        await articleList()
-      }
+    async () => {
+      console.log(2)
+      await articleDeleteService(row.id)
+      ElMessage.success("删除成功")
+      await articleList()
+    }
   )
 }
 
@@ -187,11 +191,7 @@ const deleteArticle = (row) => {
     <el-form inline>
       <el-form-item label="文章分类：">
         <el-select placeholder="请选择" v-model="categoryId">
-          <el-option
-              v-for="c in categories"
-              :key="c.id"
-              :label="c.categoryName"
-              :value="c.id">
+          <el-option v-for="c in categories" :key="c.id" :label="c.categoryName" :value="c.id">
           </el-option>
         </el-select>
       </el-form-item>
@@ -204,32 +204,42 @@ const deleteArticle = (row) => {
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="articleList">搜索</el-button>
-        <el-button @click="categoryId='';state=''">重置</el-button>
+        <el-button @click="categoryId = ''; state = ''">重置</el-button>
+        <el-icon style="width: 60px;" @click = 'grid_list = !grid_list'>
+          <Grid v-show="grid_list" style="width: 35px; height: 35px;" />
+          <List v-show="!grid_list" style="width: 35px; height: 35px;" />
+        </el-icon>
       </el-form-item>
+
     </el-form>
     <!-- 文章列表 -->
-    <el-table :data="articles" style="width: 100%">
+    <el-table :data="articles" style="width: 100%" v-show="!grid_list">
       <el-table-column label="文章标题" width="400" prop="title"></el-table-column>
       <el-table-column label="分类" prop="categoryName"></el-table-column>
       <el-table-column label="发表时间" prop="createTime"></el-table-column>
       <el-table-column label="状态" prop="state"></el-table-column>
       <el-table-column label="操作" width="100">
         <template #default="{ row }">
-          <el-button :icon="Edit" circle plain type="primary" @click="showEditDialog(row,'编辑文章')"></el-button>
+          <el-button :icon="Edit" circle plain type="primary" @click="showEditDialog(row, '编辑文章')"></el-button>
           <el-button :icon="Delete" circle plain type="danger" @click="deleteArticle(row)"></el-button>
         </template>
       </el-table-column>
       <template #empty>
-        <el-empty description="没有数据"/>
+        <el-empty description="没有数据" />
       </template>
     </el-table>
-    <!-- 分页条 -->
-    <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize" :page-sizes="[3, 5 ,10, 15]"
-                   layout="jumper, total, sizes, prev, pager, next" background :total="total"
-                   @size-change="onSizeChange"
-                   @current-change="onCurrentChange" style="margin-top: 20px; justify-content: flex-end"/>
-  </el-card>
 
+    <div style="display: flex; flex-wrap: wrap" v-show="grid_list">
+      <template v-for="(item, index) in articles" :key="index">
+        <Card :title="item.title" :updateTime="item.updateTime" style="margin-right: 20px; margin-top:20px" />
+      </template>
+    </div>
+
+    <!-- 分页条 -->
+    <el-pagination v-model:current-page="pageNum" v-model:page-size="pageSize" :page-sizes="[3, 5, 10, 15]"
+      layout="jumper, total, sizes, prev, pager, next" background :total="total" @size-change="onSizeChange"
+      @current-change="onCurrentChange" style="margin-top: 20px; justify-content: flex-end" />
+  </el-card>
 
   <!-- 抽屉 -->
   <el-drawer v-model="visibleDrawer" :title="drawerTitle" direction="rtl" size="50%">
@@ -246,33 +256,25 @@ const deleteArticle = (row) => {
       </el-form-item>
       <el-form-item label="文章封面">
 
-        <el-upload class="avatar-uploader" :auto-upload="true" :show-file-list="false"
-                   action="/api/upload"
-                   name="file"
-                   :headers="{'Authorization':tokenStore.token}"
-                   :on-success="uploadSuccess"
-        >
-          <el-image v-if="articleModel.coverImg" :src="articleModel.coverImg" class="avatar"/>
+        <el-upload class="avatar-uploader" :auto-upload="true" :show-file-list="false" action="/api/upload" name="file"
+          :headers="{ 'Authorization': tokenStore.token }" :on-success="uploadSuccess">
+          <el-image v-if="articleModel.coverImg" :src="articleModel.coverImg" class="avatar" />
           <el-icon v-else class="avatar-uploader-icon">
-            <Plus/>
+            <Plus />
           </el-icon>
         </el-upload>
       </el-form-item>
       <el-form-item label="文章内容">
         <div class="editor">
-          <quill-editor
-              theme="snow"
-              v-model:content="articleModel.content"
-              contentType="html"
-          >
+          <quill-editor theme="snow" v-model:content="articleModel.content" contentType="html">
           </quill-editor>
 
         </div>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="drawerTitle==='添加文章'?addArticle('已发布'):updateArticle('已发布')">发布
+        <el-button type="primary" @click="drawerTitle === '添加文章' ? addArticle('已发布') : updateArticle('已发布')">发布
         </el-button>
-        <el-button type="info" @click="drawerTitle==='添加文章'?addArticle('草稿'):updateArticle('草稿')">草稿
+        <el-button type="info" @click="drawerTitle === '添加文章' ? addArticle('草稿') : updateArticle('草稿')">草稿
         </el-button>
       </el-form-item>
     </el-form>
@@ -294,36 +296,36 @@ const deleteArticle = (row) => {
 /* 抽屉样式 */
 .avatar-uploader {
 
-/* 针对内部的 .avatar 元素应用样式 */
-.avatar {
-  width: 178px;
-  height: 178px;
-  display: block;
-}
+  /* 针对内部的 .avatar 元素应用样式 */
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
+  }
 
-/* 针对内部的 .el-upload 元素应用样式 */
-.el-upload {
-  border: 1px dashed var(--el-border-color);
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: var(--el-transition-duration-fast);
-}
+  /* 针对内部的 .el-upload 元素应用样式 */
+  .el-upload {
+    border: 1px dashed var(--el-border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: var(--el-transition-duration-fast);
+  }
 
-/* 针对内部的 .el-upload 元素在 hover 状态时的样式 */
-.el-upload:hover {
-  border-color: var(--el-color-primary);
-}
+  /* 针对内部的 .el-upload 元素在 hover 状态时的样式 */
+  .el-upload:hover {
+    border-color: var(--el-color-primary);
+  }
 
-/* 针对内部的 .el-icon 元素且带有类名 avatar-uploader-icon 的样式 */
-.el-icon.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 178px;
-  height: 178px;
-  text-align: center;
-}
+  /* 针对内部的 .el-icon 元素且带有类名 avatar-uploader-icon 的样式 */
+  .el-icon.avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    text-align: center;
+  }
 }
 
 

@@ -18,3 +18,10 @@ mybatis:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 server:
   port: 9090
+
+#星火大模型配置
+yisheng:
+  spark:
+
+
+

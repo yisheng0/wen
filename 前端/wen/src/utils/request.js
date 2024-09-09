@@ -33,10 +33,11 @@ instance.interceptors.response.use(
         ElMessage.error("请先登录")
 
         router.push('/login')
-      } else {
-        ElMessage.error('服务异常')
-      }
-      return Promise.reject(error)
+      } 
+      // else {
+      //   ElMessage.error('服务异常')
+      // }
+      // return Promise.reject(error)
     }
 )
 

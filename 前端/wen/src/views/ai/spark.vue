@@ -1,20 +1,14 @@
 <script setup>
-import { ref, watch ,onUpdated, reactive} from "vue"
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { ref, watch, onUpdated } from "vue"
 import request from "@/utils/request";
-import { sparkAddSession } from "@/api/spark"
 
-
-let article = ref("")
-let text = ref("")
-let list = ref([]); 
-let session = reactive({
-    content: [],
-})
-let container = ref()
-
-
-function spkapi(mes){
-    return request.post('/ai/chat', mes)
+function spkapi() {
+    return request.post('/ai/chat', [
+        { "role": "user", content: '你好' },
+        { "role": "system", content: '你好，我是科大讯飞' },
+        { "role": "user", content: '这是我们第一次提问吗，还是你能看见之前我打招呼的你好' },
+    ])
 }
 const sse = new EventSource('/api/ai/chat-sse');
 sse.addEventListener('message', handleSSEMessage);
@@ -22,46 +16,42 @@ sse.addEventListener('message', handleSSEMessage);
 function handleSSEMessage(event) {
     if (event.data === 'data: [DONE]') {
         console.log('结束了');
-        if (list.value.length === 0 || list.value[list.value.length - 1].value !== text.value) {
-            list.value.push({
-                value: text.value,
-                type: 1
-            });
-        }
-        session.content.push({role: "system", content: text.value})
-        scrollToBottom(container.value);
-        text.value = '';
     } else {
-        console.log(event.data);
-        let jsonStartIndex = event.data.indexOf("data: ") + 6;
-        let flowText = JSON.parse(event.data.substring(jsonStartIndex))['choices'][0]["delta"]["content"];
-        text.value += flowText;
-        updateChatDisplay();
+        console.log(JSON.parse(event.data.substring(6))['choices'][0]["delta"]["content"]);
     }
 }
+// sse.onopen = function(event) {
+//     console.log('open');
+//     console.log(event.data);
+// };
 
-function updateChatDisplay() {
-    if (list.value.length > 0 && list.value[list.value.length - 1].type === 1) {
-        list.value[list.value.length - 1].value = text.value;
-    } else {
-        list.value.push({
-            value: text.value,
-            type: 1
-        });
-    }
-    scrollToBottom(container.value);
-}
+
+let article = ref("")
+let text = ref("")
+let list = ref([]);
+let container = ref()
+// AIzaSyAMsuLLChMqilSiCu9ynWGKeUyy56XbEg0
+
+const genAI = new GoogleGenerativeAI("AIzaSyAMsuLLChMqilSiCu9ynWGKeUyy56XbEg0");
 
 async function run() {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
     const prompt = article.value
     article.value = ""
     list.value.push({
         value: prompt,
         type: 0
     })
-    session.content.push({role: "user", content: prompt})
     scrollToBottom(container.value)
-    spkapi(session.content)
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    text.value = response.text();
+    list.value.push({
+        value: text.value,
+        type: 1
+    })
+    scrollToBottom(container.value)
 }
 function scrollToBottom(div) {
     // console.log(1)
@@ -75,9 +65,9 @@ function scrollToBottom(div) {
 <template>
     <el-card class="page-container">
         <div class="enter">
-            <el-input v-model="article"  @keydown.enter="run" placeholder="Enter 发送" type="textarea" class="input" />
-            <el-button type="primary" plain @click="run">发送</el-button>
-            <el-button type="primary" plain @click="sparkAddSession(session)">保存</el-button>
+            <el-input v-model="article" @keydown.enter="run" placeholder="Enter 发送" type="textarea" class="input" />
+            <el-button type="primary" plain @click="spkapi">发送</el-button>
+            <el-button type="primary" plain @click="list = []">清空</el-button>
         </div>
 
         <div class="container" ref="container">
@@ -90,7 +80,8 @@ function scrollToBottom(div) {
                 </div>
                 <div class="right" v-else v-bind:key="item">
                     <el-card shadow="always">
-                        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />{{ item.value
+                        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />{{
+                            item.value
                         }}
                     </el-card>
                 </div>

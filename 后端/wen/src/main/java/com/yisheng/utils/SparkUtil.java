@@ -1,5 +1,8 @@
 package com.yisheng.utils;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -15,7 +18,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class SparkUtil {
 
@@ -32,11 +38,25 @@ public class SparkUtil {
         return httpClient;
     }
 
-    public static HttpPost httpPost(String content){
+    public static HttpPost httpPost(String content) {
+//        System.out.println(content);
+//        JsonParser parser = new JsonParser();
+//        JsonElement jsonElement = parser.parse(content);
+//        System.out.println(content);
+//        System.out.println(jsonElement);
+//        String contentValue = null;
+//        if (jsonElement.isJsonObject()) {
+//            JsonObject jsonObject = jsonElement.getAsJsonObject();
+//            contentValue = jsonObject.get("content").getAsString();
+//            System.out.println(contentValue);
+//        } else {
+//            System.out.println("Invalid JSON format");
+//        }
+
         HttpPost httpPost = new HttpPost(url);
         httpPost.setHeader("Content-Type", contentType);
         httpPost.setHeader("Authorization", authorization); // 注意替换成你的API密钥
-        String json = "{\"model\":\"4.0Ultra\",\"messages\":[{\"role\":\"user\",\"content\":\"" + content + "\"}],\"stream\":true}";
+        String json = "{\"model\":\"4.0Ultra\",\"messages\":" + content.toString() + ",\"stream\":true}";
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
         httpPost.setEntity(entity);
         return httpPost;

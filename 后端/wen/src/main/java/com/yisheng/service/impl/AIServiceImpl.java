@@ -10,50 +10,61 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 
 @Service
 @Slf4j
 public class AIServiceImpl implements AIService {
 
-    private static final Long DEFAULT_TIMEOUT = 30000L; // 默认超时时间（毫秒）
-    @Override
-    public void streamAIResponse(SseEmitter emitter, String content) {
-
+//    private static final Long DEFAULT_TIMEOUT = 60000L;
+    private static final Map<String, SseEmitter> map = new HashMap<>();
+    public String fetchDataFromPost(String content) throws IOException {
         CloseableHttpClient httpClient = SparkUtil.createHttpClient();
+        SseEmitter sseEmitter = map.get("key");
         HttpPost httpPost = SparkUtil.httpPost(content);
-
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        CloseableHttpResponse response = httpClient.execute(httpPost);
             HttpEntity responseEntity = response.getEntity();
             if (responseEntity != null) {
-                // 假设返回的是流式JSON（这里可能需要根据实际情况处理）
-                // 但通常SSE是通过文本行发送的，这里为了示例简化处理
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
-                        System.out.println(line);
-                        emitter.send(line);
+                        log.info("Received line: {}", line);
+                        sseEmitter.send(line);
                     }
                 }
             }
-            EntityUtils.consume(responseEntity); // 消耗响应内容
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            EntityUtils.consume(responseEntity);
+        return null;
+    }
+
+    @Override
+    public void streamAIResponse(SseEmitter emitter) {
 
     }
 
     @Override
-    public SseEmitter creatSseEmitter() {
-        SseEmitter emitter = new SseEmitter(DEFAULT_TIMEOUT);
-        emitter.onTimeout(() -> emitter.complete()); // 设置超时回调
+    public SseEmitter createSseEmitter() {
+        SseEmitter emitter = new SseEmitter();
+        emitter.onTimeout(emitter::complete);
+        map.put("key", emitter);
         return emitter;
     }
 
+    // Generate a unique request ID
+    private String generateUniqueId() {
+        return UUID.randomUUID().toString();
+    }
 
+    @Override
+    public SseEmitter creatSseEmitter() {
+        return createSseEmitter();
+    }
 }

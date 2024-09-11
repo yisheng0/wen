@@ -1,17 +1,31 @@
 <script setup>
-import { ref, watch ,onUpdated, reactive} from "vue"
+import { ref, watch, reactive, onMounted} from "vue"
 import request from "@/utils/request";
-import { sparkAddSession } from "@/api/spark"
+import { sparkAddSession, sparkGetSession, sparkUpdateSession} from "@/api/spark"
+import { Memo } from '@element-plus/icons-vue'
 
 
 let article = ref("")
 let text = ref("")
-let list = ref([]); 
+let list = ref([]);
+let currId = ref(null) 
 let session = reactive({
     content: [],
 })
 let container = ref()
+let session_history = ref([])
 
+onMounted(() => {
+    sparkGetSession().then(res => {
+        console.log(res)
+        session_history.value = res.data
+    })
+})
+
+watch(()=>session.content, () => {
+    console.log(111111111111)
+    sparkUpdateSession(currId.value,session.content)
+},{deep: true})
 
 function spkapi(mes){
     return request.post('/ai/chat', mes)
@@ -68,6 +82,27 @@ function scrollToBottom(div) {
     div.scrollTop = div.scrollHeight;
 }
 
+function lookBack(item){
+    currId.value = item.id
+    let content = JSON.parse(item.content)
+    session.content = content
+    let arr = []
+    for(let i=0;i<content.length;i++){
+        arr.push({
+            value: content[i].content,
+            type: content[i].role === "user"? 0 : 1
+        })
+    }
+    list.value = arr
+}
+
+function newTalk(){
+    session.content = []
+    list.value = []
+    currId.value = null
+    sparkAddSession(session)
+    currId.value = session_history.value.length + 1
+}
 
 
 </script>
@@ -77,9 +112,18 @@ function scrollToBottom(div) {
         <div class="enter">
             <el-input v-model="article"  @keydown.enter="run" placeholder="Enter 发送" type="textarea" class="input" />
             <el-button type="primary" plain @click="run">发送</el-button>
-            <el-button type="primary" plain @click="sparkAddSession(session)">保存</el-button>
+            <el-button type="primary" plain @click="newTalk">新增</el-button>
         </div>
-
+        <el-dropdown style="position: absolute; ">
+            <el-button style="width: 40px; height:40px; background-color: #F3F6FC; border-radius: 30%;">
+            <el-icon style="width: 30px; height:30px;"><Memo style="width: 30px; height:30px;"/></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu v-for="item in session_history" :key="item.id" @click="lookBack(item)">
+                <el-dropdown-item>{{item.title}}</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         <div class="container" ref="container">
             <template v-for="item in list">
 

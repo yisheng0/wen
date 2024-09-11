@@ -1,6 +1,7 @@
 package com.yisheng.service.impl;
 
 import com.yisheng.mapper.SessionMapper;
+import com.yisheng.pojo.Result;
 import com.yisheng.pojo.Session;
 import com.yisheng.service.SessionService;
 import com.yisheng.utils.ThreadLocalUtil;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -29,12 +31,26 @@ public class SessionServiceImpl implements SessionService {
         return null;
     }
 
+    public List<Session> findById() {
+        Map<String,Object> map = ThreadLocalUtil.get();
+        Integer id = (Integer) map.get("id");
+        List<Session> session = sessionMapper.findById(id);
+        return session;
+    }
+
+    @Override
+    public Session findContentById(Integer id) {
+        return null;
+    }
+
+    @Override
+    public Result update(Integer id, String content) {
+        sessionMapper.update(id, content);
+        return Result.success();
+    }
+
 //    public void delete(Integer id) {
 //        sessionMapper.delete(id);
-//    }
-
-//    public session findById(Integer id) {
-//        return sessionMapper.findById(id);
 //    }
 //
 //    public List<session> list() {

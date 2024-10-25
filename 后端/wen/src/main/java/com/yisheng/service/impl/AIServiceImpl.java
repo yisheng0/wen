@@ -18,30 +18,30 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-
 @Service
 @Slf4j
 public class AIServiceImpl implements AIService {
 
-//    private static final Long DEFAULT_TIMEOUT = 60000L;
+    // private static final Long DEFAULT_TIMEOUT = 60000L;
     private static final Map<String, SseEmitter> map = new HashMap<>();
+
     public String fetchDataFromPost(String content) throws IOException {
         CloseableHttpClient httpClient = SparkUtil.createHttpClient();
         SseEmitter sseEmitter = map.get("key");
         HttpPost httpPost = SparkUtil.httpPost(content);
         CloseableHttpResponse response = httpClient.execute(httpPost);
-            HttpEntity responseEntity = response.getEntity();
-            if (responseEntity != null) {
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        log.info("Received line: {}", line);
-                        sseEmitter.send(line);
-                    }
+        HttpEntity responseEntity = response.getEntity();
+        if (responseEntity != null) {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info("Received line: {}", line);
+                    sseEmitter.send(line);
                 }
             }
-            EntityUtils.consume(responseEntity);
+        }
+        EntityUtils.consume(responseEntity);
         return null;
     }
 

@@ -18,4 +18,10 @@
 灵感创作，接入了谷歌gemini，可以提问互动，提供创作灵感
 ![mdImg/屏幕截图 2024-09-11 212932.png](<mdImg/屏幕截图 2024-09-11 212932.png>)
 
-![alt text](<mdImg/屏幕截图 2024-09-11 213012.png>)
+iframe嵌入，绘画功能
+![alt text](<mdImg/image.png>)
+
+个人中心，可查看个人信息，修改个人信息
+![alt text](<mdImg/屏幕截图 2024-10-25 123502.png>)
+![alt text](<mdImg/屏幕截图 2024-10-25 123538.png>)
+![alt text](<mdImg/屏幕截图 2024-10-25 123548.png>)
